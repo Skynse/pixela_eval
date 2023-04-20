@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-
-use super::parser::{ Parser, Token};
+use super::parser::{Parser, Token};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stack {
@@ -21,7 +20,6 @@ impl Stack {
         //  get the last element of the stack
         self.data.last()
     }
-
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -38,7 +36,7 @@ impl Sanitize for String {
     fn sanitize(&self) -> String {
         let mut sanitized = String::new();
         let mut prev_char = ' ';
-    
+
         for (i, c) in self.chars().enumerate() {
             if c.is_ascii_alphanumeric() {
                 if i > 0 && (prev_char.is_ascii_digit() || prev_char == ')') {
@@ -49,12 +47,9 @@ impl Sanitize for String {
             prev_char = c;
         }
 
-        
-    
         sanitized
+    }
 }
-}
-
 
 impl Expression {
     pub fn new(input: String) -> Self {
@@ -63,8 +58,6 @@ impl Expression {
             stack: Stack::new(),
         }
     }
-
-
 
     pub fn push_number(&mut self, num: f64) {
         self.stack.push(Token::Number(num));
@@ -78,15 +71,13 @@ impl Expression {
         self.stack.data = data;
     }
 
-
     pub fn input(&self) -> String {
         self.input.clone()
     }
 
-
     pub fn eval_with_var(&self) -> Option<f64> {
-       // substitute variables
-       let inp = self.input.clone();
+        // substitute variables
+        let inp = self.input.clone();
 
         let binding = Parser::new(inp);
         let tokens = binding.tokens();
@@ -100,7 +91,6 @@ impl Expression {
         }
     }
 }
-
 
 #[cfg(test)]
 
@@ -122,8 +112,6 @@ mod test_eval_with_var {
         variables.insert("x".to_string(), 2.0);
         assert_eq!(expr.eval_with_var().unwrap().round(), 5.0);
     }
-
-
 
     #[test]
     fn not_a_math_expression() {

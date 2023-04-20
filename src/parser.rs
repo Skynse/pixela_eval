@@ -5,7 +5,7 @@ use nom::{
     bytes::complete::{tag, take_while1},
     character::complete::char,
     character::complete::space0 as space,
-    combinator::{map, map_res, opt, peek, not},
+    combinator::{map, map_res, not, opt, peek},
     error::ParseError,
     multi::many0,
     sequence::{delimited, pair, tuple},
@@ -14,9 +14,7 @@ use nom::{
 
 type Number = f64;
 
-use std::{str::FromStr};
-
-
+use std::str::FromStr;
 
 trait Stack<T> {
     fn top(&self) -> Option<T>;
@@ -106,8 +104,6 @@ trait Stringify {
     fn to_string(&self) -> String;
 }
 
-
-
 impl Stringify for Vec<Token> {
     fn to_string(&self) -> String {
         self.iter()
@@ -194,8 +190,6 @@ impl Parser {
         })(input)
     }
 
-
-
     pub fn parse_function(input: &str) -> IResult<&str, Token> {
         // function could be sin, cos, tan
         map(
@@ -209,13 +203,19 @@ impl Parser {
         )(input)
     }
 
-    
     fn negate(input: &str) -> IResult<&str, ()> {
         map(tuple((opt(tag(" ")), char('-'), opt(tag(" ")))), |_| ())(input)
     }
     fn parse_operator(input: &str) -> IResult<&str, Token> {
         let (input, symbol) = alt((
-            tag("+"), tag("-"), tag("*"), tag("/"), tag("^"), tag("("), tag(")")))(input)?;
+            tag("+"),
+            tag("-"),
+            tag("*"),
+            tag("/"),
+            tag("^"),
+            tag("("),
+            tag(")"),
+        ))(input)?;
         let op = match symbol {
             "+" => Operator::new("+", 2, true, |a, b| a + b),
             "-" => {
@@ -239,8 +239,6 @@ impl Parser {
             Self::parse_variable,
             Self::parse_operator,
             Self::parse_function,
-
-
         ))(input)
     }
 
@@ -258,7 +256,6 @@ impl Parser {
         }
         false
     }
-
 
     pub fn shunting_yard(tokens: Vec<Token>) -> Result<Vec<Token>, String> {
         let mut output: Vec<Token> = Vec::new();
@@ -278,13 +275,24 @@ impl Parser {
                             Token::Operator(top_op) => {
                                 let p = top_op.precedence;
                                 let q = operator.precedence;
-                                if (p > q) || (p == q && operator.is_left_associative) {
+
+                                if (top_op.is_left_associative && p >= q)
+                                    || (!top_op.is_left_associative && p > q)
+                                {
                                     output.push(operators.pop().unwrap());
                                 } else {
                                     break;
                                 }
                             }
-                            _ => unreachable!("{:?} must not be on operator stack", token),
+                            Token::Number(_) => todo!(),
+                            Token::Variable(_) => todo!(),
+                            Token::RightParen => {
+                                while (top != Token::LeftParen) {
+                                    assert!(operators.pop().is_some());
+                                }
+                            }
+                            Token::Negate => todo!(),
+                            Token::Function(_) => todo!(),
                         }
                     }
                     operators.push(token);
@@ -311,26 +319,24 @@ impl Parser {
         for token in postfix_tokens {
             match token {
                 Token::Number(number) => stack.push(number),
-                Token::Function(_) => {
-                    match token {
-                        Token::Function(Function::Sin) => {
-                            if let Some(x) = stack.pop() {
-                                stack.push(x.sin());
-                            }
+                Token::Function(_) => match token {
+                    Token::Function(Function::Sin) => {
+                        if let Some(x) = stack.pop() {
+                            stack.push(x.sin());
                         }
-                        Token::Function(Function::Cos) => {
-                            if let Some(x) = stack.pop() {
-                                stack.push(x.cos());
-                            }
-                        }
-                        Token::Function(Function::Tan) => {
-                            if let Some(x) = stack.pop() {
-                                stack.push(x.tan());
-                            }
-                        }
-                        _ => unreachable!("Unexpected function {:?} during calculation", token),
                     }
-                }
+                    Token::Function(Function::Cos) => {
+                        if let Some(x) = stack.pop() {
+                            stack.push(x.cos());
+                        }
+                    }
+                    Token::Function(Function::Tan) => {
+                        if let Some(x) = stack.pop() {
+                            stack.push(x.tan());
+                        }
+                    }
+                    _ => unreachable!("Unexpected function {:?} during calculation", token),
+                },
                 Token::Operator(operator) => {
                     if let Some(y) = stack.pop() {
                         if let Some(x) = stack.pop() {
@@ -350,33 +356,29 @@ impl Parser {
                     }
                 }
 
-                Token::Variable(_) => {
-                    match token {
-                        Token::Variable(Variable::X) => {
-                            if let Some(x) = stack.pop() {
-                                stack.push(x);
-                            }
+                Token::Variable(_) => match token {
+                    Token::Variable(Variable::X) => {
+                        if let Some(x) = stack.pop() {
+                            stack.push(x);
                         }
-                        Token::Variable(Variable::Y) => {
-                            if let Some(y) = stack.pop() {
-                                stack.push(y);
-                            }
-                        }
-                        Token::Variable(Variable::Z) => {
-                            if let Some(z) = stack.pop() {
-                                stack.push(z);
-                            }
-                        }
-                        _ => unreachable!("Unexpected variable {:?} during calculation", token),
                     }
-                }
+                    Token::Variable(Variable::Y) => {
+                        if let Some(y) = stack.pop() {
+                            stack.push(y);
+                        }
+                    }
+                    Token::Variable(Variable::Z) => {
+                        if let Some(z) = stack.pop() {
+                            stack.push(z);
+                        }
+                    }
+                    _ => unreachable!("Unexpected variable {:?} during calculation", token),
+                },
                 _ => unreachable!("Unexpected token {:?} during calculation", token),
             }
         }
 
-        if stack.len() != 1 {
-            return Err(String::from("Invalid expression"));
-        }
+        assert!(stack.len() == 1);
         Ok(stack.pop().unwrap())
     }
 }
@@ -384,7 +386,7 @@ impl Parser {
 #[cfg(test)]
 
 mod test_parser {
-    use super::{Operator, Token, Function};
+    use super::{Function, Operator, Token};
     use crate::parser::{Parser, Variable};
 
     // evals
@@ -468,9 +470,4 @@ mod test_parser {
         let result = Parser::calculate(result.unwrap());
         assert_eq!(result.unwrap(), -1.0);
     }
-
-    
-
-
-    
 }
