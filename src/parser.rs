@@ -257,7 +257,7 @@ impl Parser {
         false
     }
 
-    pub fn shunting_yard(tokens: Vec<Token>) -> Result<Vec<Token>, String> {
+    pub fn RPN(tokens: Vec<Token>) -> Result<Vec<Token>, String> {
         let mut output: Vec<Token> = Vec::new();
         let mut operators: Vec<Token> = Vec::new();
 
@@ -429,10 +429,10 @@ mod test_parser {
     }
 
     #[test]
-    fn print_shunting_yard() {
+    fn print_RPN() {
         let mut p = Parser::new("1 + 2 * 3".to_string());
         let result = p.tokens();
-        let result = Parser::shunting_yard(result.unwrap().1);
+        let result = Parser::RPN(result.unwrap().1);
         println!("{:?}", result);
     }
 
@@ -440,7 +440,7 @@ mod test_parser {
     fn test_calculate_4_plus_2_times_3() {
         let mut p = Parser::new("4 + 2 * 3".to_string());
         let result = p.tokens();
-        let result = Parser::shunting_yard(result.unwrap().1);
+        let result = Parser::RPN(result.unwrap().1);
         let result = Parser::calculate(result.unwrap());
         assert_eq!(result.unwrap(), 10.0);
     }
@@ -449,7 +449,7 @@ mod test_parser {
     fn test_calculate_4_dot_5_plus_2_times_3() {
         let mut p = Parser::new("4.5 + 2 * 3".to_string());
         let result = p.tokens();
-        let result = Parser::shunting_yard(result.unwrap().1);
+        let result = Parser::RPN(result.unwrap().1);
         let result = Parser::calculate(result.unwrap());
         assert_eq!(result.unwrap(), 10.5);
     }
@@ -458,7 +458,7 @@ mod test_parser {
     fn test_calculate_4_leftparen_2_plus_3_rightparen() {
         let mut p = Parser::new("4 * (2 + 3)".to_string());
         let result = p.tokens();
-        let result = Parser::shunting_yard(result.unwrap().1);
+        let result = Parser::RPN(result.unwrap().1);
         let result = Parser::calculate(result.unwrap());
         assert_eq!(result.unwrap(), 20.0);
     }
@@ -467,7 +467,7 @@ mod test_parser {
     fn test_negative_number() {
         let mut p = Parser::new("-1".to_string());
         let result = p.tokens();
-        let result = Parser::shunting_yard(result.unwrap().1);
+        let result = Parser::RPN(result.unwrap().1);
         println!("{:?}", result);
         let result = Parser::calculate(result.unwrap());
         assert_eq!(result.unwrap(), -1.0);

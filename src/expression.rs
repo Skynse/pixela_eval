@@ -78,7 +78,7 @@ impl Expression {
     pub fn eval_with_var(&self) -> Option<f64> {
         let mut p = Parser::new(self.input.clone());
         let result = p.tokens();
-        let result = Parser::shunting_yard(result.unwrap().1);
+        let result = Parser::RPN(result.unwrap().1);
         let result = Parser::calculate(result.unwrap());
         Some(result.unwrap())
     }
@@ -129,7 +129,7 @@ mod test_eval_with_var {
     fn parse_5_x() {
         let mut p = Parser::new("5x".to_string());
         let result = p.tokens();
-        let result = Parser::shunting_yard(result.unwrap().1);
+        let result = Parser::RPN(result.unwrap().1);
         let result = Parser::calculate(result.unwrap());
         assert_eq!(result.unwrap(), 5.0);
     }
