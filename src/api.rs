@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use super::expression::Expression;
-use super::parser::{Parser, Token};
+pub use super::expression::Expression;
+pub use super::parser::{Parser, Token};
 
 pub fn eval(input: String, x: Option<f64>) -> Option<f64> {
     let mut expr = Expression::new(input);
