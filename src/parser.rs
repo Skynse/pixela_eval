@@ -378,7 +378,9 @@ impl Parser {
             }
         }
 
-        assert!(stack.len() == 1);
+        if stack.len() != 1 {
+            return Err(format!("Expected 1 value on stack, found {}", stack.len()));
+        }
         Ok(stack.pop().unwrap())
     }
 }

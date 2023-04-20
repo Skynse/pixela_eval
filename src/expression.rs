@@ -76,19 +76,11 @@ impl Expression {
     }
 
     pub fn eval_with_var(&self) -> Option<f64> {
-        // substitute variables
-        let inp = self.input.clone();
-
-        let binding = Parser::new(inp);
-        let tokens = binding.tokens();
-        let result = Parser::shunting_yard(tokens.unwrap().1);
+        let mut p = Parser::new(self.input.clone());
+        let result = p.tokens();
+        let result = Parser::shunting_yard(result.unwrap().1);
         let result = Parser::calculate(result.unwrap());
-
-        if let Ok(num) = result {
-            Some(num)
-        } else {
-            None
-        }
+        Some(result.unwrap())
     }
 }
 
@@ -99,7 +91,7 @@ mod test_eval_with_var {
 
     #[test]
     fn five_x() {
-        let expr = Expression::new("5x".to_string());
+        let expr = Expression::new("5*x".to_string());
         let mut variables = HashMap::new();
         variables.insert("x".to_string(), 2.0);
         assert_eq!(expr.eval_with_var().unwrap(), 10.0);
@@ -107,7 +99,8 @@ mod test_eval_with_var {
 
     #[test]
     fn five_sin_x() {
-        let expr = Expression::new("5 * sin ( x )".to_string());
+        let expr = Expression::new("5*sin ( x )".to_string());
+
         let mut variables = HashMap::new();
         variables.insert("x".to_string(), 2.0);
         assert_eq!(expr.eval_with_var().unwrap().round(), 5.0);
